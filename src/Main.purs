@@ -4,9 +4,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..))
 import Prelude (class Eq, Unit, bind, unit, when, (&&), (<>), (==), (||), class Show, show)
 
-import Data.Map (Map)
 import Data.Map as M
-import Data.Map as Map
 import Effect (Effect)
 import Halogen as H
 import Halogen.Aff as HA
@@ -24,7 +22,7 @@ instance showPlayer :: Show Player where
   show O = "o"
   show X = "x"
 
-type Board = Map Coord (Maybe Player)
+type Board = M.Map Coord (Maybe Player)
 
 type Coord = Tuple Int Int
 
@@ -42,7 +40,7 @@ next X = O
 
 init :: State
 init = {
-  board : Map.empty,
+  board : M.empty,
   turn: O,
   winner: Nothing
 }
@@ -145,17 +143,16 @@ handle :: forall o m. Action -> H.HalogenM State Action () o m Unit
 handle = case _ of
   Click row col -> do
     state <- H.get
-    when (state.winner == Nothing) do
-      when (getCell state.board row col == Nothing) do
-        let newBoard = setCell state.board row col (Just state.turn)
-            w = if isWin newBoard state.turn
-                then Just state.turn
-                else Nothing
-        H.put {
-          board: newBoard,
-          turn: next state.turn,
-          winner: w
-        }
+    when (state.winner == Nothing && getCell state.board row col == Nothing) do
+      let newBoard = setCell state.board row col (Just state.turn)
+          w = if isWin newBoard state.turn
+              then Just state.turn
+              else Nothing
+      H.put {
+        board: newBoard,
+        turn: next state.turn,
+        winner: w
+      }
   Reset -> H.put init
 
 main :: Effect Unit
